@@ -234,7 +234,7 @@ int pkgman(struct info* user_info)
 		 //  {"dnf list installed 2> /dev/null | wc -l", "(dnf)"}, // according to https://stackoverflow.com/questions/48570019/advantages-of-dnf-vs-rpm-on-fedora, dnf and rpm return the same number of packages
 		 {"qlist -I 2> /dev/null | wc -l", "(emerge)"},
 		 {"flatpak list 2> /dev/null | wc -l", "(flatpak)"},
-		 {"snap list 2> /dev/null | wc -l", "(snap)"},
+		 //  {"snap list 2> /dev/null | wc -l", "(snap)"},
 		 {"guix package --list-installed 2> /dev/null | wc -l", "(guix)"},
 		 {"nix-store -q --requisites /run/current-system/sw 2> /dev/null | wc -l", "(nix)"},
 		 {"pacman -Qq 2> /dev/null | wc -l", "(pacman)"},
@@ -1316,6 +1316,7 @@ void usage(char* arg) {
 
 // the main function is on the bottom of the file to avoid double function declarations
 int main(int argc, char* argv[]) {
+	printf("\n");
 	char* cache_env = getenv("UWUFETCH_CACHE_ENABLED"); // getting cache env variable
 	struct configuration config_flags;
 	struct info user_info = {0};
