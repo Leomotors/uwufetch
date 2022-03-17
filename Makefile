@@ -1,6 +1,6 @@
 NAME = uwufetch
-FILES = uwufetch.c
-CFLAGS = -O3
+FILES = uwufetch.c uwulib.c
+CFLAGS = -O3 -Wall -Wextra
 CFLAGS_DEBUG = -Wall -Wextra -g -pthread
 CC = cc
 DESTDIR = /usr

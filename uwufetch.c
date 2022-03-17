@@ -24,6 +24,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#include "uwulib.h"
+#include <assert.h>
+#include <stdbool.h>
+
 #if defined(__APPLE__) || defined(__FREEBSD__)
 	#include <sys/sysctl.h>
 	#include <time.h>
@@ -190,8 +195,15 @@ struct configuration parse_config(struct info* user_info) {
 			config_flags.show_user_info = !strcmp(buffer, "true");
 		if (sscanf(buffer, "os=%[truefalse]", buffer))
 			config_flags.show_os = strcmp(buffer, "false");
-		if (sscanf(buffer, "host=%[truefalse]", buffer))
-			config_flags.show_host = strcmp(buffer, "false");
+		if (sscanf(buffer, "host=%s", buffer)) {
+			if (strcmp(buffer, "false") == 0)
+				config_flags.show_host = false;
+			else if (*buffer)
+				strcpy(user_info->model, replacenbsp(buffer));
+			else
+				config_flags.show_host = true;
+		}
+
 		if (sscanf(buffer, "kernel=%[truefalse]", buffer))
 			config_flags.show_kernel = strcmp(buffer, "false");
 		if (sscanf(buffer, "cpu=%[truefalse]", buffer))
@@ -474,7 +486,7 @@ int print_info(struct configuration* config_flags, struct info* user_info) {
 		system("ls $(brew --cellar) | wc -l | awk -F' ' '{print \"  \x1b[34m                   \x1b[0m\x1b[1mPKGS\x1b[0m        \"$1 \" (brew)\"}'");
 #else
 	if (config_flags->show_pkgs) // print pkgs
-		responsively_printf(print_buf, "%s%s%sPKGS        %s%s%d: %s", MOVE_CURSOR, NORMAL, BOLD, NORMAL, NORMAL, user_info->pkgs, user_info->pkgman_name);
+		responsively_printf(print_buf, "%s%s%sPKGS        %s%s%d: %s", MOVE_CURSOR, NORMAL, BOLD, NORMAL, NORMAL, user_info->pkgs, UwuPackageName(user_info->pkgman_name));
 #endif
 	if (config_flags->show_uptime) { // print uptime
 		if (user_info->uptime == 0) {
@@ -844,6 +856,29 @@ void uwu_kernel(char* kernel) {
 		// Windows
 		else KERNEL_TO_UWU(splitted[i], "windows", "WinyandOwOws");
 
+		// https://lingojam.com/Englishtouwu
+		else {
+			char* dashseptoken;
+			char dsuwu[strlen(splitted[i]) * 2];
+			*dsuwu	   = '\0';
+			char* curr = strdup(splitted[i]);
+
+#define DASHSEP_TO_UWU(original, uwufied)    \
+	if (strcmp(dashseptoken, original) == 0) \
+		sprintf(dsuwu + strlen(dsuwu), "-%s", uwufied);
+
+			while ((dashseptoken = strsep(&curr, "-"))) {
+				if (!strlen(dashseptoken)) break;
+
+				DASHSEP_TO_UWU("microsoft", "micwosoft")
+				else DASHSEP_TO_UWU("standard", "standawd")
+
+					else sprintf(dsuwu + strlen(dsuwu), "-%s", dashseptoken);
+			}
+
+			sprintf(splitted[i], "%s", dsuwu + 1);
+		}
+
 		if (i != 0) strcat(kernel, " ");
 		strcat(kernel, splitted[i]);
 	}
@@ -870,6 +905,9 @@ void uwu_hw(char* hwname) {
 	HW_TO_UWU("poweredge", "POwOwEdge")
 	HW_TO_UWU("apple", "Nyaa\bpple")
 	HW_TO_UWU("electronic", "ElectrOwOnic")
+
+	HW_TO_UWU("Ryzen", "Wyzen")
+	HW_TO_UWU("Microsoft", "Micwosoft")
 #undef HW_TO_UWU
 }
 
@@ -914,7 +952,7 @@ struct info get_info()
 		// read file
 		model_fp = fopen(model_filename[i], "r");
 		if (model_fp) {
-			fgets(tmp_model[i], 256, model_fp);
+			assert(fgets(tmp_model[i], 256, model_fp));
 			tmp_model[i][strlen(tmp_model[i]) - 1] = '\0';
 			fclose(model_fp);
 		}
@@ -1317,6 +1355,7 @@ void usage(char* arg) {
 // the main function is on the bottom of the file to avoid double function declarations
 int main(int argc, char* argv[]) {
 	printf("\n");
+
 	char* cache_env = getenv("UWUFETCH_CACHE_ENABLED"); // getting cache env variable
 	struct configuration config_flags;
 	struct info user_info = {0};
